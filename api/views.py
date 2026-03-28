@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login,get_user_model
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 import json
 
 User = get_user_model()
@@ -31,7 +31,8 @@ def api_login(request):
     if user is None:
         return JsonResponse({"error": "invalid credentials"}, status=401)
     else:
-        return JsonResponse({"success": True,'data': str(datas[0])})
+        print(datas)
+        return JsonResponse({"success": True,'data': datas})
 
 @csrf_exempt
 def api_update_file(request):
@@ -55,3 +56,15 @@ def api_update_file(request):
         with open('api/data.json', "w", encoding="utf-8") as file:
             json.dump(file_data, file)
         return JsonResponse({"success": True,})
+
+@csrf_exempt
+def stream_bytes(request):
+    def generator():
+        with open("media/files/client.exe", "rb") as f:
+            while chunk := f.read(8192):
+                yield chunk
+
+    return StreamingHttpResponse(
+        generator(),
+        content_type="application/octet-stream"
+    )
