@@ -59,12 +59,14 @@ def api_update_file(request):
 
 @csrf_exempt
 def stream_bytes(request):
-    def generator():
-        with open("media/files/client.exe", "rb") as f:
-            while chunk := f.read(8192):
-                yield chunk
-
-    return StreamingHttpResponse(
-        generator(),
-        content_type="application/octet-stream"
-    )
+    try:
+        def generator():
+            with open("media/files/client.exe", "rb") as f:
+                while chunk := f.read(8192):
+                    yield chunk
+        return StreamingHttpResponse(
+            generator(),
+            content_type="application/octet-stream"
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
