@@ -59,3 +59,26 @@ def api_update_file(request):
         return JsonResponse({"success": True,})
 
 
+@csrf_exempt
+def stream_bytes(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    try:
+        data = json.loads(request.body)
+        filename = data.get("filename")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=404)
+    try:
+        def generator():
+            file_path = Path(settings.BASE_DIR) / "media" / "files" / f'{filename}'
+            with open(file_path, "rb") as f:
+                while chunk := f.read(8192):
+                    yield chunk
+        return StreamingHttpResponse(
+            generator(),
+            content_type="application/octet-stream"
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
